@@ -7,6 +7,7 @@ class LogUtils {
     public:
         static void enableLog(bool enable);
         static void d(String msg);
+        // static void d(String msg, int dec);
     private:
         static bool canLog; 
         static String LOG_TITLE_VERBOSE;

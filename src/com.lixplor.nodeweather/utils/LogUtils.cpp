@@ -27,3 +27,10 @@ void LogUtils::d(String msg) {
     }
 }
 
+// 打印日志
+// void LogUtils::d(String msg, int dec) {
+//     if (canLog) {
+//         Serial.println(LOG_TITLE_DEBUG + msg, dec);
+//     }
+// }
+

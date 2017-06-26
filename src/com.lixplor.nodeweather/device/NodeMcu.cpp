@@ -35,9 +35,6 @@ int NodeMcu::scanAPNum() {
     return WiFi.scanNetworks();
 }
 
-// 获取热点
-
-
 // 获取信息 ------------------------
 
 // 获取wifi连接状态
@@ -112,6 +109,34 @@ void NodeMcu::closeConnection(WiFiClient client) {
 
 bool NodeMcu::isClientConnected(WiFiClient client) {
     return client.connected();
+}
+
+// EEPROM --------------------
+
+// EEPROM使用空间, 从0到4096
+int NodeMcu::eepromSize;
+
+// 初始化
+void NodeMcu::initEeprom(int size) {
+    eepromSize = size;
+    EEPROM.begin(eepromSize);
+}
+
+// 读取EEPROM
+byte NodeMcu::readEeprom(int address) {
+    return EEPROM.read(address);
+}
+
+// 写入EEPROM, 地址从0开始. 一个地址写入一个byte
+void NodeMcu::writeEeprom(int address, byte data) {
+    EEPROM.write(address, data);
+}
+
+// 清空EEPROM
+void NodeMcu::clearEeprom() {
+    for (int i = 0; i < eepromSize; i++) {
+        writeEeprom(i, 0);
+    }
 }
 
 // html --------------------

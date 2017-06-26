@@ -3,6 +3,7 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <EEPROM.h>
 
 class NodeMcu {
     public:
@@ -30,6 +31,12 @@ class NodeMcu {
         void response(WiFiClient client, String content);
         void closeConnection(WiFiClient client);
         bool isClientConnected(WiFiClient client);
+
+        static int eepromSize;
+        void initEeprom(int size);
+        byte readEeprom(int address);
+        void writeEeprom(int address, byte data);
+        void clearEeprom();
 };
 
 #endif

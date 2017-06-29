@@ -132,6 +132,21 @@ void NodeMcu::writeEeprom(int address, byte data) {
     EEPROM.write(address, data);
 }
 
+// 写入EEPROM, 字符串
+void NodeMcu::writeEeprom(String data) {
+    // todo
+}
+
+// 读取EEPROM, 字符串
+String NodeMcu::readEeprom() {
+    String result = "";
+    for (int i = 0; i < eepromSize; i++) {
+        byte b = readEeprom(i);
+        result += String(b);
+    }
+    return result;
+}
+
 // 清空EEPROM
 void NodeMcu::clearEeprom() {
     for (int i = 0; i < eepromSize; i++) {

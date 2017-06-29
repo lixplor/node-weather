@@ -36,6 +36,8 @@ class NodeMcu {
         void initEeprom(int size);
         byte readEeprom(int address);
         void writeEeprom(int address, byte data);
+        String readEeprom();
+        void writeEeprom(String data);
         void clearEeprom();
 };
 

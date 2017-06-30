@@ -46,8 +46,32 @@ void PCD8544::text(String text, int fontSize, bool hasBackground) {
     display.print(text);
 }
 
+// 换行
 void PCD8544::newLine() {
     display.println();
+}
+
+// 工具 ------------------
+
+// 生成足够一行的字符串, 一行能显示14个
+String PCD8544::genString(String title, int value) {
+    String valueStr = String(value);
+    int spaceNum = 14 - title.length() - valueStr.length();
+    String result = title;
+    for (int i = 0; i < spaceNum; i++) {
+        result.concat(" ");
+    }
+    result.concat(valueStr);
+    return result;
+}
+
+String PCD8544::genString(String title) {
+    int spaceNum = 14 - title.length();
+    String result = title;
+    for (int i = 0; i < spaceNum; i++) {
+        result.concat(" ");
+    }
+    return result;
 }
 
 

@@ -147,32 +147,19 @@ void loop() {
 
     PCD8544.text("06/11    23:30", 1, true);
     PCD8544.newLine();
-    PCD8544.text("TEMP ", 1, false);
-    PCD8544.text(String("       ") + (int)realTemp, 1, false);
+    PCD8544.text(PCD8544.genString("TEMP", (int)realTemp), 1, false);
     PCD8544.newLine();
-    PCD8544.text("FEEL ", 1, false);
-    PCD8544.text(String("       ") + (int)feelTemp, 1, false);
+    PCD8544.text(PCD8544.genString("FEEL", (int)feelTemp), 1, false);
     PCD8544.newLine();
-    PCD8544.text("HUMID", 1, false);
-    PCD8544.text(String("       ") + (int)humid, 1, false);
+    PCD8544.text(PCD8544.genString("HUMID", (int)humid), 1, false);
     PCD8544.newLine();
-    PCD8544.text("AQI  ", 1, false);
     int intAQI = (int)avgAqi;
     if (intAQI < 0) intAQI = 0;
-    if (intAQI / 100 > 0) {
-        // 三位数
-        PCD8544.text(String("      " ) + intAQI, 1, false);
-    } else if (intAQI / 10 > 0) {
-        // 两位数
-        PCD8544.text(String("       " ) + intAQI, 1, false);
-    } else {
-        // 一位数
-        PCD8544.text(String("        " ) + intAQI, 1, false);
-    }
+    PCD8544.text(PCD8544.genString("AQI", (int)intAQI), 1, false);
     PCD8544.newLine();
     // 显示IP
     String ip = nodeMcu.getAPIP().toString();
-    PCD8544.text(ip, 1, true);
+    PCD8544.text(PCD8544.genString("IP:" + ip), 1, true);
     PCD8544.show();
 
     delay(2000);

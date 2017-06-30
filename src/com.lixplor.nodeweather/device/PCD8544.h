@@ -38,6 +38,8 @@ class PCD8544 {
         void show();
         void text(String text, int fontSize, bool hasBackground);
         void newLine();
+        String genString(String title, int value);
+        String genString(String title);
 };
 
 #endif

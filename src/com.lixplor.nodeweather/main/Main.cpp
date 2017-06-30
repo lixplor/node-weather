@@ -170,7 +170,9 @@ void loop() {
         PCD8544.text(String("        " ) + intAQI, 1, false);
     }
     PCD8544.newLine();
-    PCD8544.text("     HOME     ", 1, true);
+    // 显示IP
+    String ip = nodeMcu.getAPIP().toString();
+    PCD8544.text(ip, 1, true);
     PCD8544.show();
 
     delay(2000);

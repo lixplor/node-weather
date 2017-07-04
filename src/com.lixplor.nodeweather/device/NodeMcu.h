@@ -4,6 +4,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
+#include <ESP8266HTTPClient.h>
 
 class NodeMcu {
     public:
@@ -39,6 +40,14 @@ class NodeMcu {
         String readEeprom();
         void writeEeprom(String data);
         void clearEeprom();
+
+        HTTPClient http;
+        // HTTPClient createHttpClient();
+        static String FINGERPRINT_HEWEATHER;
+        // String httpRequest(HTTPClient http, String method, String url, String data);
+        String httpGet(String url);
+        // String httpPost(HTTPClient http, String url, String data);
+        // String httpPut(HTTPClient http, String url, String data);
 };
 
 #endif

@@ -14,15 +14,22 @@ void NodeMcu::startSoftAP(const char* ssid, const char* password) {
 }
 
 bool NodeMcu::connectWifi(char* ssid, char* password) {
-    for (int i = 0; i < 6; i++) {
-        wifiStatus = WiFi.begin(ssid, password);
-        Serial.println("wifi connecting: " + String(wifiStatus));
-        delay(5000);
-        if (wifiStatus == WL_CONNECTED) {
-            return true;
-        }
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
     }
-    return false;
+    return true;
+    // for (int i = 0; i < 6; i++) {
+    //     wifiStatus = WiFi.begin(ssid, password);
+    //     Serial.println("wifi connecting: " + String(wifiStatus));
+    //     delay(5000);
+    //     if (wifiStatus == WL_CONNECTED) {
+    //         return true;
+    //     }
+    // }
+    // return false;
 }
 
 // 断开连接
@@ -153,6 +160,45 @@ void NodeMcu::clearEeprom() {
         writeEeprom(i, 0);
     }
 }
+
+// HTTP --------------------
+
+String NodeMcu::FINGERPRINT_HEWEATHER = "7D EB 04 77 9D 4C 80 13 62 E2 CE 39 CE A3 21 F9 3C";
+
+// 创建客户端
+// HTTPClient NodeMcu::createHttpClient() {
+//     // HTTPClient http;
+//     return http;
+// }
+
+// http request
+// String NodeMcu::httpRequest(HTTPClient http, String method, String url, String data) {
+//   Serial.println("HTTPS " + method + " to: " + url);
+//   Serial.println("body=" + data);
+//   http.begin(url, FINGERPRINT_HEWEATHER); //HTTPS
+//   http.addHeader("X-HTTP-Method-Override", method, false, true);
+//   int resultCode = http.POST(data);
+//   String result = resultCode + "#" + http.getString();
+//   Serial.println(result);
+//   return result;
+// }
+
+String NodeMcu::httpGet(String url) {
+  Serial.println("HTTPS GET to: " + url);
+  http.begin(url, FINGERPRINT_HEWEATHER); //HTTPS
+  int resultCode = http.GET();
+  String result = http.getString();
+  Serial.println(result);
+  return result;
+}
+
+// String NodeMcu::httpPost(HTTPClient http, String url, String data) {
+//   return httpRequest(http, "POST", url, data);
+// }
+
+// String NodeMcu::httpPut(HTTPClient http, String url, String data) {
+//   return httpRequest(http, "PUT", url, data);
+// }
 
 // html --------------------
 

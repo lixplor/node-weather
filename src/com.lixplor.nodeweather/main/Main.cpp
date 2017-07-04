@@ -8,7 +8,11 @@ email  : me@lixplor.com
 ******************************************************************/
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
+#include <ESP8266WiFi.h>
+
 #include "../utils/LogUtils.h"
+#include "../utils/StringUtils.h"
 #include "../device/DhtSensor.h"
 #include "../device/PCD8544.h"
 #include "../device/DustSensor.h"
@@ -17,11 +21,18 @@ using namespace std;
 
 // 创建对象
 LogUtils LogUtils;
+StringUtils stringUtils;
 DhtSensor DhtSensor;
 PCD8544 PCD8544;
 DustSensor DustSensor;
 NodeMcu nodeMcu;
 ESP8266WebServer server(80);
+
+const size_t bufferSize = JSON_ARRAY_SIZE(0) + JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(10) + 8*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(6) + 11*JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(13) + 1820;
+DynamicJsonBuffer jsonBuffer(bufferSize);
+
+
+WiFiClient client;
 
 void routerRoot() {
     String html = nodeMcu.HTML_FRONT + nodeMcu.HTML_END;
@@ -76,14 +87,15 @@ void initPCD() {
 
 // 初始化NodeMcu
 void initNodeMcu() {
-    nodeMcu.setMode(WIFI_AP_STA);
-    nodeMcu.startSoftAP("node-weather", "12345678");
-    delay(5000);
+    // nodeMcu.setMode(WIFI_AP_STA);
+    // nodeMcu.startSoftAP("node-weather", "12345678");
+    // delay(5000);
 
     LogUtils.d("AP IP: ");
     Serial.println(nodeMcu.getAPIP());
-    // LogUtils.d("STA IP: ");
-    // Serial.println(nodeMcu.getSTAIP());
+    nodeMcu.connectWifi("HappyHome", "85273202");
+    LogUtils.d("STA IP: ");
+    Serial.println(nodeMcu.getSTAIP());
 
     server.on("/", routerRoot);
     server.on("/setting/wifi/scan", routerScan);
@@ -118,6 +130,70 @@ void loop() {
 
     server.handleClient();
 
+
+    // 信息
+    const char* host = "api.thinkpage.cn";
+    const char* url = "/v3/weather/now.json?key=24qbvr1mjsnukavo&location=shijiazhuang&language=en";
+
+
+    // 连接
+    LogUtils.d("start connect host");
+    if (!client.connect(host, 80)) {
+        LogUtils.d("host connect failed!");
+    } else {
+        LogUtils.d("host connected!");
+    }
+    delay(100);
+
+    // 发送请求
+    String request = String("GET ") + url + " HTTP/1.1\r\n"
+        + "Host: " + host + "\r\n"
+        + "Connection: close\r\n\r\n";
+
+    LogUtils.d("start requesting:");
+    LogUtils.d(request);
+    client.print(request);
+    while (client.connected()) {
+        String line = client.readStringUntil('\n');
+
+        if (line == "\r") {
+            LogUtils.d("headers received: " + line);
+            break;
+        }
+    }
+    LogUtils.d("reading response...");
+
+    String jsonStr = client.readString();
+    LogUtils.d("response: " + jsonStr);
+    client.stop();
+
+
+    LogUtils.d("HEAP: " + String(ESP.getFreeHeap()));
+
+    JsonObject& root = jsonBuffer.parseObject(jsonStr);
+
+    // 心知天气
+    const char* city = root["results"][0]["location"]["name"];
+    const char* condition = root["results"][0]["now"]["text"];
+    const char* outsideTemp = root["results"][0]["now"]["temperature"];
+    LogUtils.d(root["results"][0]["location"]["name"]);
+    LogUtils.d(root["results"][0]["now"]["text"]);
+    LogUtils.d(root["results"][0]["now"]["temperature"]);
+    
+    PCD8544.clearScreen();
+
+    PCD8544.textCenter(city, 1, true);
+    PCD8544.newLine();
+    PCD8544.newLine();
+    PCD8544.textCenter(outsideTemp, 2, false);
+    PCD8544.newLine();
+    PCD8544.textCenter(condition, 1, false);
+    PCD8544.show();
+  
+    delay(5000);
+
+    // 获取传感器信息
+
     float humid = DhtSensor.getHumid();
     float realTemp = DhtSensor.getRealTemp();
     if (isnan(humid) || humid < 0 || humid > 100) {
@@ -145,7 +221,7 @@ void loop() {
     
     PCD8544.clearScreen();
 
-    PCD8544.text("06/11    23:30", 1, true);
+    PCD8544.text("              ", 1, true);
     PCD8544.newLine();
     PCD8544.text(PCD8544.genString("TEMP", (int)realTemp), 1, false);
     PCD8544.newLine();
@@ -162,7 +238,7 @@ void loop() {
     PCD8544.text(PCD8544.genString("IP:" + ip), 1, true);
     PCD8544.show();
 
-    delay(2000);
+    delay(5000);
 }
 
 

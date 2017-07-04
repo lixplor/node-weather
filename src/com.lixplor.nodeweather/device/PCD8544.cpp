@@ -46,6 +46,35 @@ void PCD8544::text(String text, int fontSize, bool hasBackground) {
     display.print(text);
 }
 
+// 居中显示文字
+void PCD8544::textCenter(String text, int fontSize, bool hasBackground) {
+    display.setTextSize(fontSize);
+    if (hasBackground) {
+        display.setTextColor(WHITE, BLACK);
+    } else {
+        display.setTextColor(BLACK);
+    }
+    String content = "";
+    int lineCount = 0;
+    if (fontSize == 1) {
+        // 一行14个
+        lineCount = 14;
+    } else if (fontSize == 2) {
+        // 一行7个
+        lineCount = 7;
+    }
+    int spaceNum = lineCount - text.length();
+        int leftSpaces = spaceNum / 2;
+        for (int i = 0; i < leftSpaces; i++) {
+            content.concat(" ");
+        }
+        content.concat(text);
+        for (int i = 0; i < spaceNum - leftSpaces; i++) {
+            content.concat(" ");
+        }
+    display.print(content);
+}
+
 // 换行
 void PCD8544::newLine() {
     display.println();

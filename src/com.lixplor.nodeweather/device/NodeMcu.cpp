@@ -16,9 +16,14 @@ void NodeMcu::startSoftAP(const char* ssid, const char* password) {
 bool NodeMcu::connectWifi(char* ssid, char* password) {
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
+    int count = 0;
     while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
+        delay(1000);
         Serial.print(".");
+        count++;
+        if (count == 30) {
+            return false;
+        }
     }
     return true;
     // for (int i = 0; i < 6; i++) {

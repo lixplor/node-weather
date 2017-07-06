@@ -34,11 +34,15 @@ class PCD8544 {
         // static unsigned char PROGMEM logo16_glcd_bmp[];
         void begin();
         void setContrast(int contrast);
+        void setTextWrap(bool wrap);
         void clearScreen();
         void show();
+        void setCursor(int16_t x, int16_t y);
         void text(String text, int fontSize, bool hasBackground);
         void textCenter(String text, int fontSize, bool hasBackground);
         void newLine();
+        void bitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color, uint16_t bg);
+        void line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
         String genString(String title, int value);
         String genString(String title);
 };

@@ -23,6 +23,11 @@ void PCD8544::setContrast(int contrast) {
     display.setContrast(contrast);
 }
 
+// 设置文字是否自动换行
+void PCD8544::setTextWrap(bool wrap) {
+    display.setTextWrap(wrap);
+}
+
 // 清空显示
 void PCD8544::clearScreen() {
     display.clearDisplay();
@@ -31,6 +36,11 @@ void PCD8544::clearScreen() {
 // 显示文字
 void PCD8544::show() {
     display.display();
+}
+
+// 设置光标位置
+void PCD8544::setCursor(int16_t x, int16_t y) {
+    display.setCursor(x, y);
 }
 
 // 功能 -------------------
@@ -78,6 +88,16 @@ void PCD8544::textCenter(String text, int fontSize, bool hasBackground) {
 // 换行
 void PCD8544::newLine() {
     display.println();
+}
+
+// 绘制图像
+void PCD8544::bitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color, uint16_t bg) {
+    display.drawBitmap(x, y, bitmap, w, h, color, bg);
+}
+
+// 绘制线条
+void PCD8544::line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color) {
+    display.drawLine(x0, y0, x1, y1, color);
 }
 
 // 工具 ------------------

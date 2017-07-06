@@ -13,6 +13,7 @@ email  : me@lixplor.com
 
 #include "../utils/LogUtils.h"
 #include "../utils/StringUtils.h"
+#include "../device/Icon.h"
 #include "../device/DhtSensor.h"
 #include "../device/PCD8544.h"
 #include "../device/DustSensor.h"
@@ -22,11 +23,14 @@ using namespace std;
 // 创建对象
 LogUtils LogUtils;
 StringUtils stringUtils;
+Icon icon;
 DhtSensor DhtSensor;
 PCD8544 PCD8544;
 DustSensor DustSensor;
 NodeMcu nodeMcu;
 ESP8266WebServer server(80);
+
+bool isWifiConected = false;
 
 const size_t bufferSize = JSON_ARRAY_SIZE(0) + JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(10) + 8*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(6) + 11*JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(13) + 1820;
 DynamicJsonBuffer jsonBuffer(bufferSize);
@@ -82,20 +86,30 @@ void routerConnect() {
 void initPCD() {
     PCD8544.begin();
     PCD8544.setContrast(55);
+    PCD8544.setTextWrap(false);
     PCD8544.clearScreen();
 }
 
 // 初始化NodeMcu
 void initNodeMcu() {
+
+    PCD8544.clearScreen();
+    PCD8544.setCursor(0, 8);
+    PCD8544.textCenter("Connect WiFi", 1, false);
+    PCD8544.show();
+
     // nodeMcu.setMode(WIFI_AP_STA);
     // nodeMcu.startSoftAP("node-weather", "12345678");
     // delay(5000);
 
     LogUtils.d("AP IP: ");
     Serial.println(nodeMcu.getAPIP());
-    nodeMcu.connectWifi("HappyHome", "85273202");
+    isWifiConected = nodeMcu.connectWifi("HappyHome", "85273202");
     LogUtils.d("STA IP: ");
     Serial.println(nodeMcu.getSTAIP());
+    if (nodeMcu.getSTAIP()) {
+        isWifiConected = true;
+    }
 
     server.on("/", routerRoot);
     server.on("/setting/wifi/scan", routerScan);
@@ -112,17 +126,17 @@ void setup()   {
     // 开启串口
     Serial.begin(115200);
 
-    // 初始化Wifi
-    initNodeMcu();
-
-    // 初始化显示屏
-    initPCD();
-
     //初始化DHT11
     DhtSensor.begin();
 
     // 稳定
-    delay(3000);
+    delay(2000);
+
+    // 初始化显示屏
+    initPCD();
+
+    // 初始化Wifi
+    initNodeMcu();
 }
 
 
@@ -179,18 +193,6 @@ void loop() {
     LogUtils.d(root["results"][0]["location"]["name"]);
     LogUtils.d(root["results"][0]["now"]["text"]);
     LogUtils.d(root["results"][0]["now"]["temperature"]);
-    
-    PCD8544.clearScreen();
-
-    PCD8544.textCenter(city, 1, true);
-    PCD8544.newLine();
-    PCD8544.newLine();
-    PCD8544.textCenter(outsideTemp, 2, false);
-    PCD8544.newLine();
-    PCD8544.textCenter(condition, 1, false);
-    PCD8544.show();
-  
-    delay(5000);
 
     // 获取传感器信息
 
@@ -221,21 +223,66 @@ void loop() {
     
     PCD8544.clearScreen();
 
+    // 显示上下黑色栏
+    PCD8544.setCursor(0, 0);
     PCD8544.text("              ", 1, true);
-    PCD8544.newLine();
-    PCD8544.text(PCD8544.genString("TEMP", (int)realTemp), 1, false);
-    PCD8544.newLine();
-    PCD8544.text(PCD8544.genString("FEEL", (int)feelTemp), 1, false);
-    PCD8544.newLine();
-    PCD8544.text(PCD8544.genString("HUMID", (int)humid), 1, false);
-    PCD8544.newLine();
+    PCD8544.setCursor(0, 40);
+    PCD8544.text("              ", 1, true);
+
+    // 显示图标
+    PCD8544.bitmap(2, 8, icon.logo8_temp_bmp, 6, 8, BLACK, WHITE);    // 室内温度图标
+    PCD8544.bitmap(2, 16, icon.logo8_feel_bmp, 6, 8, BLACK, WHITE);   // 体感温度图标
+    PCD8544.bitmap(43, 8, icon.logo8_humid_bmp, 6, 8, BLACK, WHITE);  // 室内湿度图标
+    PCD8544.bitmap(43, 16, icon.logo8_aqi_bmp, 6, 8, BLACK, WHITE);   // 室内AQI图标
+    PCD8544.bitmap(34, 8, icon.logo8_c_bmp, 6, 8, BLACK, WHITE);      // 室内温度c
+    PCD8544.bitmap(34, 16, icon.logo8_c_bmp, 6, 8, BLACK, WHITE);     // 体感温度c
+    PCD8544.bitmap(2, 24, icon.logo8_temp_bmp, 6, 8, BLACK, WHITE);    // 室外温度图标
+    PCD8544.bitmap(34, 24, icon.logo8_c_bmp, 6, 8, BLACK, WHITE);     // 室外温度c
+    PCD8544.bitmap(76, 8, icon.logo8_percent_bmp, 6, 8, BLACK, WHITE);  // 室内湿度%
+    
+    // 绘制分割线
+    PCD8544.line(0, 0, 0, 47, BLACK);
+    PCD8544.line(83, 0, 83, 47, BLACK);
+    PCD8544.line(41, 8, 41, 23, BLACK);
+    PCD8544.line(0, 23, 83, 23, BLACK);
+
+    
+    if (isWifiConected) {
+        PCD8544.setCursor(8, 0);
+        PCD8544.text("HappyHome", 1, true);
+        PCD8544.bitmap(1, 0, icon.logo8_wifi_bmp, 6, 8, WHITE, BLACK);
+    } else {
+        PCD8544.setCursor(0, 0);
+        PCD8544.text("              ", 1, true);
+    }
+    
+    PCD8544.setCursor(18, 8);
+    PCD8544.text(String((int)realTemp), 1, false);
+
+    PCD8544.setCursor(18, 16);
+    PCD8544.text(String((int)feelTemp), 1, false);
+
+    PCD8544.setCursor(60, 8);
+    PCD8544.text(String((int)humid), 1, false);
+
     int intAQI = (int)avgAqi;
     if (intAQI < 0) intAQI = 0;
-    PCD8544.text(PCD8544.genString("AQI", (int)intAQI), 1, false);
-    PCD8544.newLine();
+    PCD8544.setCursor(60, 16);
+    PCD8544.text(String((int)intAQI), 1, false);
+
+    // 显示室外温度
+    PCD8544.setCursor(18, 24);
+    PCD8544.text(String(outsideTemp), 1, false);
+    // 显示天气
+    PCD8544.setCursor(2, 32);
+    PCD8544.text(String(condition), 1, false);
+    // 显示城市
+    PCD8544.setCursor(8, 40);
+    PCD8544.text(city, 1, true);
+    PCD8544.bitmap(2, 40, icon.logo8_location_bmp, 6, 8, WHITE, BLACK);
     // 显示IP
-    String ip = nodeMcu.getAPIP().toString();
-    PCD8544.text(PCD8544.genString("IP:" + ip), 1, true);
+    // String ip = nodeMcu.getAPIP().toString();
+    // PCD8544.text(PCD8544.genString("IP:" + ip), 1, true);
     PCD8544.show();
 
     delay(5000);

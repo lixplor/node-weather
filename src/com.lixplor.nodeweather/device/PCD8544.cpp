@@ -16,6 +16,12 @@ Adafruit_PCD8544 PCD8544::getDisplayInstance() {
 // 启动
 void PCD8544::begin() {
     display.begin();
+    pinMode(PIN_LED, OUTPUT);
+}
+
+// 设置背光
+void PCD8544::enableLED(bool enable) {
+    digitalWrite(PIN_LED, enable);
 }
 
 // 设置对比度(推荐55)

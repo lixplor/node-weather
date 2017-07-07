@@ -15,6 +15,7 @@
 #define PIN_DC 12
 #define PIN_CE 5
 #define PIN_RST 4
+#define PIN_LED 15
 
 // 配置
 #define NUMFLAKES 10
@@ -33,6 +34,7 @@ class PCD8544 {
         static Adafruit_PCD8544 getDisplayInstance();
         // static unsigned char PROGMEM logo16_glcd_bmp[];
         void begin();
+        void enableLED(bool enable);
         void setContrast(int contrast);
         void setTextWrap(bool wrap);
         void clearScreen();

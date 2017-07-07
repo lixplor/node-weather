@@ -29,14 +29,20 @@ PCD8544 PCD8544;
 DustSensor DustSensor;
 NodeMcu nodeMcu;
 ESP8266WebServer server(80);
+WiFiClient client;
 
 bool isWifiConected = false;
+int loopCount = 0;
+String city;
+String todayCondition;
+String todayLowTemp;
+String todayHighTemp;
 
 const size_t bufferSize = JSON_ARRAY_SIZE(0) + JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(10) + 8*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(6) + 11*JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(13) + 1820;
 DynamicJsonBuffer jsonBuffer(bufferSize);
 
 
-WiFiClient client;
+
 
 void routerRoot() {
     String html = nodeMcu.HTML_FRONT + nodeMcu.HTML_END;
@@ -85,6 +91,7 @@ void routerConnect() {
 // 初始化显示屏
 void initPCD() {
     PCD8544.begin();
+    PCD8544.enableLED(true);
     PCD8544.setContrast(55);
     PCD8544.setTextWrap(false);
     PCD8544.clearScreen();
@@ -119,36 +126,10 @@ void initNodeMcu() {
 
 }
 
-void setup()   {
-    // 开启日志
-    LogUtils.enableLog(true);
-
-    // 开启串口
-    Serial.begin(115200);
-
-    //初始化DHT11
-    DhtSensor.begin();
-
-    // 稳定
-    delay(2000);
-
-    // 初始化显示屏
-    initPCD();
-
-    // 初始化Wifi
-    initNodeMcu();
-}
-
-
-void loop() {
-
-    server.handleClient();
-
-
+JsonObject& requestWeather() {
     // 信息
     const char* host = "api.thinkpage.cn";
-    const char* url = "/v3/weather/now.json?key=24qbvr1mjsnukavo&location=shijiazhuang&language=en";
-
+    const char* url = "/v3/weather/daily.json?key=24qbvr1mjsnukavo&location=shijiazhuang&language=en";
 
     // 连接
     LogUtils.d("start connect host");
@@ -181,18 +162,55 @@ void loop() {
     LogUtils.d("response: " + jsonStr);
     client.stop();
 
-
     LogUtils.d("HEAP: " + String(ESP.getFreeHeap()));
 
-    JsonObject& root = jsonBuffer.parseObject(jsonStr);
+    return jsonBuffer.parseObject(jsonStr);
+}
 
-    // 心知天气
-    const char* city = root["results"][0]["location"]["name"];
-    const char* condition = root["results"][0]["now"]["text"];
-    const char* outsideTemp = root["results"][0]["now"]["temperature"];
-    LogUtils.d(root["results"][0]["location"]["name"]);
-    LogUtils.d(root["results"][0]["now"]["text"]);
-    LogUtils.d(root["results"][0]["now"]["temperature"]);
+void setup()   {
+    // 开启日志
+    LogUtils.enableLog(true);
+
+    // 开启串口
+    Serial.begin(115200);
+
+    //初始化DHT11
+    DhtSensor.begin();
+
+    // 稳定
+    delay(2000);
+
+    // 初始化显示屏
+    initPCD();
+
+    // 初始化Wifi
+    initNodeMcu();
+}
+
+
+void loop() {
+
+    server.handleClient();
+
+    if (loopCount == 0) {
+
+        // 心知天气
+        JsonObject& root = requestWeather();
+        const char* cityC = root["results"][0]["location"]["name"];
+        const char* conditionC = root["results"][0]["daily"][0]["text_day"];
+        const char* lowTempC = root["results"][0]["daily"][0]["low"];
+        const char* highTempC = root["results"][0]["daily"][0]["high"];
+
+        city = String(cityC);
+        todayCondition = String(conditionC);
+        todayLowTemp = String(lowTempC);
+        todayHighTemp = String(highTempC);
+
+        LogUtils.d("today condition;" + todayCondition);
+        LogUtils.d("today low temp:" + todayLowTemp);
+        LogUtils.d("today high temp:" + todayHighTemp);
+    }
+    
 
     // 获取传感器信息
 
@@ -237,7 +255,7 @@ void loop() {
     PCD8544.bitmap(34, 8, icon.logo8_c_bmp, 6, 8, BLACK, WHITE);      // 室内温度c
     PCD8544.bitmap(34, 16, icon.logo8_c_bmp, 6, 8, BLACK, WHITE);     // 体感温度c
     PCD8544.bitmap(2, 24, icon.logo8_temp_bmp, 6, 8, BLACK, WHITE);    // 室外温度图标
-    PCD8544.bitmap(34, 24, icon.logo8_c_bmp, 6, 8, BLACK, WHITE);     // 室外温度c
+    PCD8544.bitmap(76, 24, icon.logo8_c_bmp, 6, 8, BLACK, WHITE);     // 室外温度c
     PCD8544.bitmap(76, 8, icon.logo8_percent_bmp, 6, 8, BLACK, WHITE);  // 室内湿度%
     
     // 绘制分割线
@@ -272,10 +290,10 @@ void loop() {
 
     // 显示室外温度
     PCD8544.setCursor(18, 24);
-    PCD8544.text(String(outsideTemp), 1, false);
+    PCD8544.text(todayLowTemp + "-" + todayHighTemp, 1, false);
     // 显示天气
     PCD8544.setCursor(2, 32);
-    PCD8544.text(String(condition), 1, false);
+    PCD8544.text(todayCondition, 1, false);
     // 显示城市
     PCD8544.setCursor(8, 40);
     PCD8544.text(city, 1, true);
@@ -286,6 +304,11 @@ void loop() {
     PCD8544.show();
 
     delay(5000);
+
+    loopCount++;
+    if (loopCount == 1000) {
+        loopCount = 0;
+    }
 }
 
 

@@ -213,8 +213,9 @@ void loop() {
     
 
     // 获取传感器信息
-
+    delay(100);
     float humid = DhtSensor.getHumid();
+    delay(100);
     float realTemp = DhtSensor.getRealTemp();
     if (isnan(humid) || humid < 0 || humid > 100) {
         humid = 0;
